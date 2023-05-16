@@ -1,6 +1,6 @@
 name: test1
 description: A new Flutter project.
-publish_to: "none"
+publish_to: none
 version: 0.1.0
 
 environment:
@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   dio: ^4.0.0
   flutter_html: ^2.1.2
+  image_picker: ^0.8.0+4
+  flutter_dotenv: ^5.0.0
 
 dev_dependencies:
   flutter_test:
