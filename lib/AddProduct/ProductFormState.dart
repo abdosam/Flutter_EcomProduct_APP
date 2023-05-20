@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:test1/AddProduct/ProductForm.dart';
 import 'AddProductMethod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:test1/LoginScreen.dart';
 
 class ProductFormState extends State<ProductForm> {
   final productNameController = TextEditingController();
@@ -25,66 +24,26 @@ class ProductFormState extends State<ProductForm> {
   }
 
   Future<void> getAllCategories() async {
-    try {
-      Dio dio =
-          Dio(BaseOptions(baseUrl: 'https://gsolutionapp.com/wp-json/wc/v3/'));
-      final key =
-          'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2dzb2x1dGlvbmFwcC5jb20iLCJpYXQiOjE2ODQyMzY2MDIsIm5iZiI6MTY4NDIzNjYwMiwiZXhwIjoxNjg0ODQxNDAyLCJkYXRhIjp7InVzZXIiOnsiaWQiOiIxIn19fQ.NzF7ywC7ZdSZI4V2Bx7cV-UmsWKHbyb0npiMhylKW8Y';
+    if (globalToken != null) {
+      try {
+        Dio dio = Dio(
+            BaseOptions(baseUrl: 'https://gsolutionapp.com/wp-json/wc/v3/'));
 
-      String basicAuth = 'Bearer $key';
-      var headers = {'Authorization': basicAuth};
-      dio.options.headers.addAll(headers);
+        String basicAuth = 'Bearer $globalToken';
+        var headers = {'Authorization': basicAuth};
+        dio.options.headers.addAll(headers);
 
-      Response response = await dio.get('products/categories');
-      if (response.statusCode == 200) {
-        setState(() {
-          categories = response.data;
-          categoriesIwant = extractCategories(response.data);
-        });
+        Response response = await dio.get('products/categories');
+        if (response.statusCode == 200) {
+          setState(() {
+            categories = response.data;
+            categoriesIwant = extractCategories(response.data);
+          });
+        }
+      } catch (e) {
+        print('Error retrieving categories: $e');
       }
-    } catch (e) {
-      print('Error retrieving categories: $e');
     }
-  }
-
-  Future<String> uploadImageToWordpress(File image) async {
-    Dio dio = Dio();
-    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
-
-    String imageUrl = '';
-
-    try {
-      String url = 'https://gsolutionapp.com/wp-json/wp/v2/media';
-      String key =
-          'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2dzb2x1dGlvbmFwcC5jb20iLCJpYXQiOjE2ODQyMzY2MDIsIm5iZiI6MTY4NDIzNjYwMiwiZXhwIjoxNjg0ODQxNDAyLCJkYXRhIjp7InVzZXIiOnsiaWQiOiIxIn19fQ.NzF7ywC7ZdSZI4V2Bx7cV-UmsWKHbyb0npiMhylKW8Y';
-
-      List<int> imageBytes = await image.readAsBytes();
-
-      FormData formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(imageBytes, filename: 'image.jpg'),
-      });
-
-      Response response = await dio.post(
-        url,
-        data: formData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $key',
-          },
-        ),
-      );
-
-      if (response.statusCode == 201) {
-        imageUrl = response.data['source_url'];
-        print('Image uploaded successfully. URL: $imageUrl');
-      } else {
-        print('Image upload failed. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error uploading image: $e');
-    }
-
-    return imageUrl;
   }
 
   Map<String, int> extractCategories(List<dynamic> categories) {
@@ -98,6 +57,48 @@ class ProductFormState extends State<ProductForm> {
     }
 
     return extractedCategories;
+  }
+
+  //uplad image to Wordpress to get url for dio
+  Future<String?> uploadImageToWordpress(File image) async {
+    if (globalToken != null) {
+      Dio dio = Dio();
+      dio.interceptors
+          .add(LogInterceptor(requestBody: true, responseBody: true));
+
+      String imageUrl = '';
+
+      try {
+        String url = 'https://gsolutionapp.com/wp-json/wp/v2/media';
+
+        List<int> imageBytes = await image.readAsBytes();
+
+        FormData formData = FormData.fromMap({
+          'file': MultipartFile.fromBytes(imageBytes, filename: 'image.jpg'),
+        });
+
+        Response response = await dio.post(
+          url,
+          data: formData,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $globalToken',
+            },
+          ),
+        );
+
+        if (response.statusCode == 201) {
+          imageUrl = response.data['source_url'];
+          print('Image uploaded successfully. URL: $imageUrl');
+        } else {
+          print('Image upload failed. Status code: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Error uploading image: $e');
+      }
+
+      return imageUrl;
+    }
   }
 
   List<Widget> buildCheckboxList() {
@@ -177,7 +178,7 @@ class ProductFormState extends State<ProductForm> {
             ),
             const SizedBox(height: 16.0),
             Container(
-              height: 150,
+              height: 140,
               width: 300,
               child: SingleChildScrollView(
                 child: Column(
@@ -191,7 +192,7 @@ class ProductFormState extends State<ProductForm> {
               child: const Text('Submit'),
               onPressed: () async {
                 if (image != null) {
-                  String imageUrlRecieved =
+                  String? imageUrlRecieved =
                       await uploadImageToWordpress(image!);
                   setState(() {
                     imageUrl = imageUrlRecieved;
