@@ -104,9 +104,16 @@ class ProductListState extends State<ProductList> {
       child: ListView.builder(
         itemCount: _products.length,
         itemBuilder: (BuildContext context, int index) {
+          List<dynamic>? images = _products[index]['images'];
+          String imageUrl = '';
+          if (images != null && images.isNotEmpty) {
+            imageUrl = images[0]['src'];
+          }
+          print('Image URL: $imageUrl');
+
           return ListTile(
             leading: Image.network(
-              _products[index]['images'][0]['src'],
+              imageUrl,
               width: 50,
               height: 50,
             ),
