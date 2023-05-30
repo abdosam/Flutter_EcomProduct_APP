@@ -1,7 +1,8 @@
+import 'package:WooSeller/AddProduct/ProductForm.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'product_details.dart';
-import 'package:test1/LoginScreen.dart';
+import 'LoginScreen.dart';
 import 'UpdatedProductForm.dart';
 
 Future<List<dynamic>> fetchProducts() async {
@@ -42,14 +43,30 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My App'),
-      ),
       body: const ProductList(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/addproduct');
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 490),
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return ProductForm();
+              },
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+            ),
+          );
         },
+        backgroundColor: Colors.purple,
         child: const Icon(Icons.add),
       ),
     );
@@ -89,6 +106,7 @@ class ProductListState extends State<ProductList> {
       try {
         Response response = await dio.delete('products/$productId');
         print('Product deleted successfully');
+        updateProductList();
       } catch (error) {
         print('Failed to delete product: $error');
       }
@@ -97,86 +115,211 @@ class ProductListState extends State<ProductList> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        updateProductList();
-      },
-      child: ListView.builder(
-        itemCount: _products.length,
-        itemBuilder: (BuildContext context, int index) {
-          List<dynamic>? images = _products[index]['images'];
-          String imageUrl = '';
-          if (images != null && images.isNotEmpty) {
-            imageUrl = images[0]['src'];
-          }
-          print('Image URL: $imageUrl');
-
-          return ListTile(
-            leading: Image.network(
-              imageUrl,
-              width: 50,
-              height: 50,
-            ),
-            title: Text(_products[index]['name']),
-            subtitle: Text(
-              _products[index]['price'],
-              style: const TextStyle(
+    return Scaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(35),
+            child: Text(
+              'All Products',
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 30,
+                color: Colors.purple,
               ),
             ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ProductDetailsPage(product: _products[index]),
-                ),
-              );
-            },
-            onLongPress: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Product Actions'),
-                    content: SingleChildScrollView(
-                      child: ListBody(
-                        children: <Widget>[
-                          ListTile(
-                            leading: const Icon(Icons.delete),
-                            title: const Text('Delete'),
-                            onTap: () {
-                              int productId = _products[index]['id'];
-                              print("in design : $productId");
-                              deleteProduct(productId);
-                              Navigator.pop(context);
-                            },
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                updateProductList();
+              },
+              child: Container(
+                color: Colors
+                    .grey[200], // Set the background color for the whole list
+                child: ListView.builder(
+                  itemCount: _products.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    List<dynamic>? images = _products[index]['images'];
+                    String imageUrl =
+                        'http://gsolutionapp.com/wp-content/uploads/woocommerce-placeholder.png';
+                    if (images != null && images.isNotEmpty) {
+                      imageUrl = images[0]['src'];
+                    }
+                    print('Image URL: $imageUrl');
+
+                    return Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 9.0),
+                        decoration: BoxDecoration(
+                          color: Colors.purple[100],
+                          borderRadius: BorderRadius.circular(5.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color.fromARGB(255, 135, 116, 116)
+                                  .withOpacity(0.3),
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          leading: Padding(
+                            padding: EdgeInsets.only(left: 12.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.network(
+                                imageUrl,
+                                width: 80,
+                                height: 90,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                          ListTile(
-                            leading: const Icon(Icons.edit),
-                            title: const Text('Update'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => UpdatedProductForm(
-                                    product: _products[index],
-                                  ),
+                          title: Text(
+                            _products[index]['name'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              fontFamily: 'Lato',
+                              color: Colors.black,
+                              shadows: [
+                                Shadow(
+                                  color: Color.fromRGBO(240, 240, 240, 1)
+                                      .withOpacity(0.3),
+                                  offset: Offset(2, 2),
+                                  blurRadius: 2,
                                 ),
-                              );
-                            },
+                              ],
+                            ),
                           ),
-                        ],
+                          subtitle: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '\$${_products[index]['price']}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              ),
+                            ],
+                          ),
+                          contentPadding: EdgeInsets.all(0),
+                          horizontalTitleGap: 8.0,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductDetailsPage(
+                                    product: _products[index]),
+                              ),
+                            );
+                          },
+                          onLongPress: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  backgroundColor:
+                                      Color.fromRGBO(240, 240, 240, 1),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        ListTile(
+                                          leading: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          title: Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            int productId =
+                                                _products[index]['id'];
+                                            print("in design: $productId");
+                                            deleteProduct(productId);
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ListTile(
+                                          leading: Icon(
+                                            Icons.edit,
+                                            color:
+                                                Color.fromRGBO(49, 39, 79, 1),
+                                          ),
+                                          title: Text(
+                                            'Update',
+                                            style: TextStyle(
+                                              color:
+                                                  Color.fromRGBO(49, 39, 79, 1),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            Navigator.push(
+                                              context,
+                                              PageRouteBuilder(
+                                                transitionDuration:
+                                                    Duration(milliseconds: 500),
+                                                pageBuilder: (context,
+                                                    animation,
+                                                    secondaryAnimation) {
+                                                  return UpdatedProductForm(
+                                                      product:
+                                                          _products[index]);
+                                                },
+                                                transitionsBuilder: (context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                    child) {
+                                                  return SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(0, 1),
+                                                      end: Offset.zero,
+                                                    ).animate(animation),
+                                                    child: child,
+                                                  );
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,4 @@
-name: test1
+name: WooSeller
 description: A new Flutter project.
 publish_to: none
 version: 0.1.0
@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   dio: ^4.0.0
   image_picker: ^0.8.0+4
   flutter_html: ^2.1.2
@@ -20,3 +21,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - android/app/src/main/res/
+    - ios/Runner/Assets.xcassets/AppIcon.appiconset/
